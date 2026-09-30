@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAMAAN - One Nation, One Material Code</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Space Grotesk', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            bg: '#0a0e1a',
+                            glass: 'rgba(15, 23, 42, 0.7)',
+                            glassHover: 'rgba(30, 41, 59, 0.8)',
+                            cyan: '#06b6d4',
+                            indigo: '#6366f1',
+                            violet: '#8b5cf6',
+                        },
+                        cpse: {
+                            'BHEL': '#3b82f6',
+                            'GAIL': '#10b981',
+                            'IOCL': '#f97316',
+                            'HPCL': '#a855f7',
+                            'BPCL': '#ef4444',
+                            'ONGC': '#eab308',
+                            'NTPC': '#06b6d4',
+                            'SAIL': '#818cf8',
+                            'Coal India': '#14b8a6',
+                        }
+                    },
+                    animation: {
+                        'orb-float': 'orbFloat 20s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'slide-up': 'slideUp 0.5s ease-out forwards',
+                        'slide-in-right': 'slideInRight 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'shimmer': 'shimmer 2s linear infinite',
+                    },
+                    keyframes: {
+                        orbFloat: {
+                            '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+                            '33%': { transform: 'translate(50px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-30px, 30px) scale(0.95)' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { opacity: '1', boxShadow: '0 0 15px rgba(6, 182, 212, 0.5)' },
+                            '50%': { opacity: '.7', boxShadow: '0 0 5px rgba(6, 182, 212, 0.2)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideInRight: {
+                            '0%': { opacity: '0', transform: 'translateX(30px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        shimmer: {
+                            from: { backgroundPosition: '200% 0' },
+                            to: { backgroundPosition: '-200% 0' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Plotly & Lucide -->
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <style>
+        body {
+            background-color: #0a0e1a;
+            color: #f8fafc;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0e1a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #06b6d4, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .bg-gradient-samaan {
+            background: linear-gradient(135deg, #06b6d4, #6366f1, #8b5cf6);
+        }
+
+        /* Nav Tabs */
+        .nav-tab {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .nav-tab.active {
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+        .nav-tab::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background: linear-gradient(90deg, #06b6d4, #6366f1);
+            transition: width 0.3s ease;
+        }
+        .nav-tab.active::after { width: 100%; }
+
+        /* Background Orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            opacity: 0.4;
+        }
+        .orb-1 {
+            top: -10%; left: -5%;
+            width: 40vw; height: 40vw;
+            background: radial-gradient(circle, rgba(6,182,212,0.3) 0%, rgba(10,14,26,0) 70%);
+            animation: orbFloat 25s ease-in-out infinite alternate;
+        }
+        .orb-2 {
+            bottom: -10%; right: -10%;
+            width: 50vw; height: 50vw;
+            background: radial-gradient(circle, rgba(139,92,246,0.2) 0%, rgba(10,14,26,0) 70%);
+            animation: orbFloat 20s ease-in-out infinite alternate-reverse;
+        }
+        .orb-3 {
+            top: 40%; left: 30%;
+            width: 30vw; height: 30vw;
+            background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(10,14,26,0) 70%);
+            animation: orbFloat 30s ease-in-out infinite;
+        }
+
+        /* Tab Content Transitions */
+        .tab-pane {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .tab-pane.active {
+            display: block;
+            opacity: 1;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        /* Skeleton Loading */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(30,41,59,0.6) 25%, rgba(51,65,85,0.8) 50%, rgba(30,41,59,0.6) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        /* CPSE Color Badges */
+        .cpse-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        /* Donut Chart CSS */
+        .donut-chart {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            position: relative;
+        }
+        .donut-inner {
+            width: 110px;
+            height: 110px;
+            background-color: #0a0e1a;
+            border-radius: 50%;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased selection:bg-indigo-500/30 min-h-screen flex flex-col">
+    <!-- Background Elements -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Header / Navigation -->
+    <header class="glass-panel sticky top-0 z-50 border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Brand -->
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-samaan flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                        <span class="font-heading font-bold text-white text-2xl">S</span>
+                    </div>
+                    <div>
+                        <h1 class="font-heading font-bold text-xl tracking-wide flex items-center gap-2">
+                            SAMAAN
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center gap-1.5 shadow-sm">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                Real Enterprise Data
+                            </span>
+                        </h1>
+                        <p class="text-xs text-gray-400">One Nation, One Material Code • 1,332+ Verified Master Records</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="hidden md:flex items-center space-x-1" id="nav-tabs">
+                    <button data-tab="overview" class="nav-tab active px-3 py-2 text-sm font-medium text-gray-300 hover:text-white flex items-center gap-2 rounded-md hover:bg-white/5">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview
+                    </button>
+                    <button data-tab="explorer" class="nav-tab px-3 py-2 text-sm font-medium text-gray-300 hover:text-white flex items-center gap-2 rounded-md hover:bg-white/5">
+                        <i data-lucide="search" class="w-4 h-4"></i> Explorer
+                    </button>
+                    <button data-tab="duplicates" class="nav-tab px-3 py-2 text-sm font-medium text-gray-300 hover:text-white flex items-center gap-2 rounded-md hover:bg-white/5">
+                        <i data-lucide="copy" class="w-4 h-4"></i> Duplicates
+                    </button>
+                    <button data-tab="clusters" class="nav-tab px-3 py-2 text-sm font-medium text-gray-300 hover:text-white flex items-center gap-2 rounded-md hover:bg-white/5">
+                        <i data-lucide="network" class="w-4 h-4"></i> Clusters
+                    </button>
+                    <button data-tab="cnmc" class="nav-tab px-3 py-2 text-sm font-medium text-gray-300 hover:text-white flex items-center gap-2 rounded-md hover:bg-white/5">
+                        <i data-lucide="tag" class="w-4 h-4"></i> CNMC Mapping
+                    </button>
+                    <button data-tab="generator" class="nav-tab px-3 py-2 text-sm font-medium text-gray-300 hover:text-white flex items-center gap-2 rounded-md hover:bg-white/5">
+                        <i data-lucide="zap" class="w-4 h-4"></i> Code Gen
+                    </button>
+                    <button data-tab="semantic" class="nav-tab px-3 py-2 text-sm font-medium text-gray-300 hover:text-white flex items-center gap-2 rounded-md hover:bg-white/5 border border-cyan-500/20 bg-cyan-500/5">
+                        <i data-lucide="orbit" class="w-4 h-4 text-cyan-400"></i> <span class="text-cyan-300 font-semibold">🌌 2D Map</span>
+                    </button>
+                    <button data-tab="matcher" class="nav-tab px-3 py-2 text-sm font-medium text-gray-300 hover:text-white flex items-center gap-2 rounded-md hover:bg-white/5">
+                        <i data-lucide="microscope" class="w-4 h-4"></i> Matcher
+                    </button>
+                </nav>
+            </div>
+        </div>
+        <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- ================= TAB 1: OVERVIEW ================= -->
+        <div id="tab-overview" class="tab-pane active space-y-6">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-2xl font-heading font-bold text-white">Platform Overview</h2>
+                <button onclick="loadOverview()" class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/5 transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+            </div>
+
+            <!-- Real Data Notice Banner -->
+            <div class="glass-panel rounded-xl p-4 border border-emerald-500/30 bg-emerald-500/5 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+                            100% Real-World CPSE Master & Tender Data
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">VERIFIED PRODUCTION CATALOG</span>
+                        </h3>
+                        <p class="text-xs text-gray-300 mt-0.5">Harmonizing 1,332 real materials across 9 CPSEs (BHEL, IOCL, ONGC, NTPC, SAIL, GAIL, HPCL, BPCL, Coal India) spanning Power, Steel, Mining, Oil & Gas, and Heavy Engineering.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <span class="text-xs font-mono px-3 py-1.5 rounded-lg bg-black/50 border border-white/10 text-cyan-400 font-bold">1,332 Materials</span>
+                    <span class="text-xs font-mono px-3 py-1.5 rounded-lg bg-black/50 border border-white/10 text-emerald-400 font-bold">13,945 Matches</span>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="overview-stats">
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-l-cyan-500 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="database" class="w-24 h-24"></i></div>
+                    <p class="text-sm text-gray-400 font-medium mb-1">Total Materials</p>
+                    <h3 class="text-3xl font-heading font-bold text-white counter" id="stat-total-materials">--</h3>
+                </div>
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-l-indigo-500 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="copy" class="w-24 h-24"></i></div>
+                    <p class="text-sm text-gray-400 font-medium mb-1">Duplicates Found</p>
+                    <h3 class="text-3xl font-heading font-bold text-white counter" id="stat-duplicates">--</h3>
+                </div>
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-l-violet-500 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="network" class="w-24 h-24"></i></div>
+                    <p class="text-sm text-gray-400 font-medium mb-1">Clusters Formed</p>
+                    <h3 class="text-3xl font-heading font-bold text-white counter" id="stat-clusters">--</h3>
+                </div>
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-l-emerald-500 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="tag" class="w-24 h-24"></i></div>
+                    <p class="text-sm text-gray-400 font-medium mb-1">Unique CNMC Codes</p>
+                    <h3 class="text-3xl font-heading font-bold text-white counter" id="stat-cnmc">--</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- CPSE Distribution -->
+                <div class="glass-panel rounded-xl p-6 lg:col-span-2">
+                    <h3 class="text-lg font-heading font-semibold mb-4 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-5 h-5 text-cyan-400"></i> Materials by CPSE</h3>
+                    <div id="cpse-bars" class="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                        <!-- Bars injected via JS -->
+                        <div class="skeleton h-8 w-full rounded-md mb-2"></div>
+                        <div class="skeleton h-8 w-3/4 rounded-md mb-2"></div>
+                        <div class="skeleton h-8 w-1/2 rounded-md"></div>
+                    </div>
+                </div>
+                <!-- Match Types -->
+                <div class="glass-panel rounded-xl p-6 flex flex-col items-center justify-center">
+                    <h3 class="text-lg font-heading font-semibold mb-4 self-start flex items-center gap-2"><i data-lucide="pie-chart" class="w-5 h-5 text-indigo-400"></i> Match Types</h3>
+                    <div id="donut-container" class="relative">
+                        <div class="donut-chart" style="background: conic-gradient(#10b981 0% 33%, #3b82f6 33% 66%, #f59e0b 66% 100%);">
+                            <div class="donut-inner text-center">
+                                <span class="text-xs text-gray-400 font-mono">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="donut-legend" class="mt-6 flex flex-wrap justify-center gap-3 text-xs">
+                        <!-- Legend injected via JS -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Matches -->
+            <div class="glass-panel rounded-xl p-6">
+                <h3 class="text-lg font-heading font-semibold mb-4 flex items-center gap-2"><i data-lucide="activity" class="w-5 h-5 text-violet-400"></i> Recent Activity</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-400 uppercase bg-white/5">
+                            <tr>
+                                <th class="px-4 py-3 rounded-tl-lg">Event</th>
+                                <th class="px-4 py-3">Material Code</th>
+                                <th class="px-4 py-3">Description</th>
+                                <th class="px-4 py-3 rounded-tr-lg text-right">Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-activity-tbody" class="divide-y divide-white/5">
+                            <!-- Injected via JS -->
+                            <tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">Loading data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: EXPLORER ================= -->
+        <div id="tab-explorer" class="tab-pane space-y-4">
+            <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <h2 class="text-2xl font-heading font-bold">Material Explorer</h2>
+                <div class="flex gap-3 w-full md:w-auto">
+                    <div class="relative w-full md:w-64">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
+                        </div>
+                        <input type="text" id="explorer-search" class="bg-gray-900 border border-gray-700 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full pl-10 p-2 text-white" placeholder="Search description...">
+                    </div>
+                    <select id="explorer-cpse" class="bg-gray-900 border border-gray-700 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block p-2 text-white">
+                        <option value="">All CPSEs</option>
+                        <option value="BHEL">BHEL</option>
+                        <option value="GAIL">GAIL</option>
+                        <option value="IOCL">IOCL</option>
+                        <option value="HPCL">HPCL</option>
+                        <option value="BPCL">BPCL</option>
+                        <option value="ONGC">ONGC</option>
+                        <option value="NTPC">NTPC</option>
+                        <option value="SAIL">SAIL</option>
+                        <option value="Coal India">Coal India</option>
+                    </select>
+                </div>
+            </div>
+            <div class="glass-panel rounded-xl overflow-hidden border border-white/10">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left whitespace-nowrap">
+                        <thead class="text-xs text-gray-400 uppercase bg-black/40">
+                            <tr>
+                                <th class="px-6 py-4">CPSE</th>
+                                <th class="px-6 py-4">Legacy Code</th>
+                                <th class="px-6 py-4 w-full">Description</th>
+                                <th class="px-6 py-4">Category</th>
+                                <th class="px-6 py-4 text-center">Matches</th>
+                            </tr>
+                        </thead>
+                        <tbody id="explorer-tbody" class="divide-y divide-white/5">
+                            <!-- Injected -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-4 border-t border-white/5 flex items-center justify-between bg-black/20">
+                    <span class="text-xs text-gray-400" id="explorer-page-info">Showing page 1</span>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs transition disabled:opacity-50" id="btn-exp-prev">Prev</button>
+                        <button class="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs transition disabled:opacity-50" id="btn-exp-next">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 3: DUPLICATES ================= -->
+        <div id="tab-duplicates" class="tab-pane space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                <h2 class="text-2xl font-heading font-bold">Duplicate Detection</h2>
+                <div class="flex space-x-2 bg-gray-900/50 p-1 rounded-lg border border-white/5">
+                    <button class="dup-filter px-4 py-1.5 rounded-md text-xs font-semibold bg-gray-800 text-white shadow-sm" data-type="ALL">All</button>
+                    <button class="dup-filter px-4 py-1.5 rounded-md text-xs font-semibold text-gray-400 hover:text-white transition" data-type="IDENTICAL">Identical</button>
+                    <button class="dup-filter px-4 py-1.5 rounded-md text-xs font-semibold text-gray-400 hover:text-white transition" data-type="EQUIVALENT">Equivalent</button>
+                    <button class="dup-filter px-4 py-1.5 rounded-md text-xs font-semibold text-gray-400 hover:text-white transition" data-type="SIMILAR">Similar</button>
+                </div>
+            </div>
+            
+            <div id="duplicates-container" class="space-y-6">
+                <!-- Cards injected here -->
+                <div class="text-center py-12 text-gray-500">Loading duplicate records...</div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 4: CLUSTERS ================= -->
+        <div id="tab-clusters" class="tab-pane space-y-6">
+            <h2 class="text-2xl font-heading font-bold mb-4">Material Clusters</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="clusters-container">
+                <!-- Injected via JS -->
+                <div class="skeleton h-48 w-full rounded-xl"></div>
+                <div class="skeleton h-48 w-full rounded-xl"></div>
+                <div class="skeleton h-48 w-full rounded-xl"></div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 5: CNMC MAPPING ================= -->
+        <div id="tab-cnmc" class="tab-pane space-y-4">
+            <h2 class="text-2xl font-heading font-bold">Master CNMC Registry</h2>
+            <div class="glass-panel rounded-xl overflow-hidden border border-white/10">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-400 uppercase bg-black/40">
+                            <tr>
+                                <th class="px-6 py-4">CNMC Code</th>
+                                <th class="px-6 py-4">CPSE</th>
+                                <th class="px-6 py-4">Legacy Code</th>
+                                <th class="px-6 py-4">Domain</th>
+                                <th class="px-6 py-4">Standardized Desc</th>
+                                <th class="px-6 py-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cnmc-tbody" class="divide-y divide-white/5">
+                            <!-- Injected -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 6: CODE GENERATOR (KILLER FEATURE) ================= -->
+        <div id="tab-generator" class="tab-pane">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-180px)] min-h-[600px]">
+                
+                <!-- Left: Input Form -->
+                <div class="lg:col-span-5 flex flex-col space-y-6 h-full">
+                    <div class="glass-panel rounded-2xl p-6 border border-white/10 flex-grow flex flex-col relative z-10">
+                        <div class="flex items-center justify-between mb-1">
+                            <h2 class="text-2xl font-heading font-bold bg-gradient-samaan -webkit-background-clip-text text-transparent bg-clip-text">AI Code Generator</h2>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Real CPSE Data
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-300 mb-5">Instantly standardize and map any raw legacy material description to the National Code using deterministic engineering fingerprinting.</p>
+                        
+                        <div class="mb-5">
+                            <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Quick Presets (Real CPSE Materials)</label>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" class="preset-btn px-3 py-1.5 bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-500/40 border border-white/10 rounded-lg text-xs text-gray-200 transition" data-desc="CNCTR EURO MALE 32 POLE STRT | SLDR/FASTON" data-cpse="BHEL">Euro Connector 32P</button>
+                                <button type="button" class="preset-btn px-3 py-1.5 bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-500/40 border border-white/10 rounded-lg text-xs text-gray-200 transition" data-desc="PIPE CS SEAMLESS 50MM SCH 40 A106 GR B ASME B36.10 BEVELED END" data-cpse="IOCL">50NB CS Pipe SCH 40</button>
+                                <button type="button" class="preset-btn px-3 py-1.5 bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-500/40 border border-white/10 rounded-lg text-xs text-gray-200 transition" data-desc="BALL BEARING 6310/C3 RADIAL DEEP GROOVE SINGLE ROW 50X110X27MM" data-cpse="SAIL">6310 Ball Bearing</button>
+                                <button type="button" class="preset-btn px-3 py-1.5 bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-500/40 border border-white/10 rounded-lg text-xs text-gray-200 transition" data-desc="FUSE HRC 50A 800V DIN 43620 BLADE CONTACT TYPE" data-cpse="BHEL">50A 800V HRC Fuse</button>
+                                <button type="button" class="preset-btn px-3 py-1.5 bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-500/40 border border-white/10 rounded-lg text-xs text-gray-200 transition" data-desc="RES CHIP SMD 1206 100K 1% 0.25W 100PPM" data-cpse="BHEL">100K SMD Resistor</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">CPSE Enterprise</label>
+                                <select id="gen-cpse" class="w-full bg-black/40 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:ring-cyan-500 focus:border-cyan-500 transition">
+                                    <option value="BHEL">BHEL (Heavy Engineering)</option>
+                                    <option value="IOCL">IOCL (Oil & Gas)</option>
+                                    <option value="ONGC">ONGC (Oil & Gas)</option>
+                                    <option value="NTPC">NTPC (Power)</option>
+                                    <option value="SAIL">SAIL (Steel)</option>
+                                    <option value="GAIL">GAIL (Gas & Energy)</option>
+                                    <option value="HPCL">HPCL (Refinery)</option>
+                                    <option value="BPCL">BPCL (Petroleum)</option>
+                                    <option value="Coal India">Coal India (Mining)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Legacy ERP Code</label>
+                                <input type="text" id="gen-legacy" placeholder="e.g. MAT-12345" class="w-full bg-black/40 border border-gray-700 rounded-lg p-2.5 text-sm font-mono focus:ring-cyan-500 focus:border-cyan-500 transition">
+                            </div>
+                        </div>
+
+                        <div class="flex-grow flex flex-col mb-6">
+                            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Raw Material Description</label>
+                            <textarea id="gen-desc" class="w-full flex-grow bg-black/40 border border-gray-700 rounded-lg p-4 text-sm font-mono focus:ring-cyan-500 focus:border-cyan-500 transition resize-none" placeholder="Paste unformatted, messy legacy ERP description here..."></textarea>
+                        </div>
+
+                        <button id="btn-generate" class="w-full py-3.5 rounded-xl bg-gradient-samaan text-white font-bold text-lg shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] transition-all relative overflow-hidden group">
+                            <span class="relative z-10 flex items-center justify-center gap-2">
+                                <i data-lucide="sparkles" class="w-5 h-5"></i> Generate CNMC
+                            </span>
+                            <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Results Panel -->
+                <div class="lg:col-span-7 h-full relative perspective-1000">
+                    <!-- Idle State -->
+                    <div id="gen-idle" class="absolute inset-0 glass-panel rounded-2xl border border-white/5 flex flex-col items-center justify-center text-center p-8 transition-opacity duration-500 z-0">
+                        <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 animate-pulse-glow">
+                            <i data-lucide="cpu" class="w-12 h-12 text-gray-500"></i>
+                        </div>
+                        <h3 class="text-xl font-heading text-gray-400 font-medium">Awaiting Input</h3>
+                        <p class="text-sm text-gray-500 mt-2 max-w-sm">Enter a legacy description on the left to extract attributes and map to the Centralized National Material Code.</p>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="gen-loading" class="hidden absolute inset-0 glass-panel rounded-2xl border border-cyan-500/30 flex flex-col items-center justify-center text-center p-8 z-10 bg-black/50 backdrop-blur-xl">
+                        <div class="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
+                        <p class="text-cyan-400 font-mono text-sm animate-pulse">Running NER Models & Semantic Matching...</p>
+                    </div>
+
+                    <!-- Results State -->
+                    <div id="gen-results" class="hidden absolute inset-0 glass-panel rounded-2xl border border-white/10 p-8 flex flex-col overflow-y-auto z-20 custom-scrollbar opacity-0 translate-x-8">
+                        
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1 block">National Material Code</span>
+                                <h2 id="res-cnmc" class="text-5xl font-mono font-bold gradient-text tracking-tight drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]">CNMC-000000</h2>
+                            </div>
+                            <span id="res-status" class="px-3 py-1 rounded-full text-xs font-bold border">AUTO_MAPPED</span>
+                        </div>
+
+                        <div class="bg-black/30 rounded-xl p-5 mb-6 border border-white/5">
+                            <span class="text-xs font-bold text-gray-500 uppercase mb-2 block">Standardized Description</span>
+                            <p id="res-std-desc" class="text-lg font-medium text-white leading-relaxed"></p>
+                        </div>
+
+                        <div class="mb-6">
+                            <span class="text-xs font-bold text-gray-500 uppercase mb-3 block">Extracted Attributes (NER)</span>
+                            <div id="res-attributes" class="flex flex-wrap gap-2">
+                                <!-- Chips -->
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <span class="text-xs font-bold text-gray-500 uppercase mb-2 block">Canonical Technical Key</span>
+                            <div class="bg-gray-900 rounded-lg p-3 border border-gray-800 font-mono text-sm text-cyan-300 break-all" id="res-tech-key"></div>
+                        </div>
+
+                        <div class="flex-grow flex flex-col">
+                            <span class="text-xs font-bold text-gray-500 uppercase mb-3 block flex items-center gap-2">
+                                <i data-lucide="git-merge" class="w-4 h-4"></i> Cross-Enterprise Mapped Items
+                            </span>
+                            <div id="res-mapped-items" class="flex-grow bg-black/20 rounded-xl border border-white/5 overflow-y-auto space-y-2 p-2">
+                                <!-- List -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 7: SEMANTIC MAP ================= -->
+        <div id="tab-semantic" class="tab-pane space-y-4">
+            <div class="text-center mb-4">
+                <h2 class="text-2xl font-heading font-bold">Semantic Embedding Map</h2>
+                <p class="text-sm text-gray-400">t-SNE projection of AI-computed material similarities</p>
+            </div>
+            <div class="glass-panel rounded-xl p-2 border border-white/10">
+                <div id="tsne-plot" class="w-full h-[650px] bg-black/20 rounded-lg"></div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 8: LIVE MATCHER ================= -->
+        <div id="tab-matcher" class="tab-pane space-y-6">
+            <h2 class="text-2xl font-heading font-bold">Live Semantic Matcher</h2>
+            
+            <div class="glass-panel rounded-xl p-6">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <input type="text" id="matcher-query" class="flex-grow bg-black/40 border border-gray-700 rounded-lg p-3 text-white focus:ring-cyan-500 focus:border-cyan-500" placeholder="Describe a material to find matches (e.g. 'stainless steel pipe schedule 40')">
+                    <button id="btn-match" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition flex items-center justify-center gap-2 min-w-[140px]">
+                        <i data-lucide="search" class="w-4 h-4"></i> Find
+                    </button>
+                </div>
+            </div>
+
+            <div id="matcher-results" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Results -->
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- CPSE Configuration ---
+        const CPSE_COLORS = {
+            'BHEL': '#3b82f6', 'GAIL': '#10b981', 'IOCL': '#f97316', 
+            'HPCL': '#a855f7', 'BPCL': '#ef4444', 'ONGC': '#eab308', 
+            'NTPC': '#06b6d4', 'SAIL': '#818cf8', 'Coal India': '#14b8a6'
+        };
+
+        function getCpseBadge(name) {
+            const color = CPSE_COLORS[name] || '#6b7280';
+            return `<span class="cpse-badge shadow-sm" style="background-color: ${color}20; color: ${color}; border: 1px solid ${color}40">${name}</span>`;
+        }
+
+        // --- API Helper ---
+        async function fetchAPI(endpoint, method='GET', body=null) {
+            try {
+                const opts = { method, headers: {'Content-Type': 'application/json'} };
+                if (body) opts.body = JSON.stringify(body);
+                const res = await fetch(endpoint, opts);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } catch(e) {
+                console.warn(`API Error on ${endpoint}:`, e);
+                return null;
+            }
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            setupTabs();
+            loadOverview();
+            
+            // Setup Tab specific listeners
+            document.getElementById('explorer-search').addEventListener('input', debounce(() => loadExplorer(), 500));
+            document.getElementById('explorer-cpse').addEventListener('change', () => loadExplorer());
+            
+            document.querySelectorAll('.dup-filter').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.dup-filter').forEach(b => {
+                        b.classList.remove('bg-gray-800', 'text-white', 'shadow-sm');
+                        b.classList.add('text-gray-400');
+                    });
+                    e.target.classList.remove('text-gray-400');
+                    e.target.classList.add('bg-gray-800', 'text-white', 'shadow-sm');
+                    loadDuplicates(e.target.dataset.type);
+                });
+            });
+
+            setupCodeGenerator();
+            
+            document.getElementById('btn-match').addEventListener('click', () => {
+                const q = document.getElementById('matcher-query').value;
+                if(q) loadMatcher(q);
+            });
+        });
+
+        // --- Tab Management ---
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.nav-tab');
+            const panes = document.querySelectorAll('.tab-pane');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Update tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    // Update panes
+                    const targetId = `tab-${tab.dataset.tab}`;
+                    panes.forEach(pane => {
+                        pane.classList.remove('active');
+                        if (pane.id === targetId) {
+                            pane.classList.add('active');
+                            triggerTabLoad(tab.dataset.tab);
+                        }
+                    });
+                });
+            });
+        }
+
+        let loadedTabs = new Set(['overview']);
+        function triggerTabLoad(tabName) {
+            if (tabName === 'overview') loadOverview();
+            if (tabName === 'explorer' && !loadedTabs.has('explorer')) { loadExplorer(); loadedTabs.add('explorer'); }
+            if (tabName === 'duplicates' && !loadedTabs.has('duplicates')) { loadDuplicates('ALL'); loadedTabs.add('duplicates'); }
+            if (tabName === 'clusters' && !loadedTabs.has('clusters')) { loadClusters(); loadedTabs.add('clusters'); }
+            if (tabName === 'cnmc' && !loadedTabs.has('cnmc')) { loadCNMC(); loadedTabs.add('cnmc'); }
+            if (tabName === 'semantic' && !loadedTabs.has('semantic')) { loadSemanticMap(); loadedTabs.add('semantic'); }
+        }
+
+        // --- Animation Helpers ---
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.innerHTML = end.toLocaleString();
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => { clearTimeout(timeout); func(...args); };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // --- Tab Loaders ---
+
+        async function loadOverview() {
+            const data = await fetchAPI('/api/stats');
+            if (!data) return;
+
+            // Counters
+            animateValue(document.getElementById('stat-total-materials'), 0, data.total_materials || 0, 1200);
+            animateValue(document.getElementById('stat-duplicates'), 0, data.duplicates_found || data.total_matches || 0, 1200);
+            animateValue(document.getElementById('stat-clusters'), 0, data.total_clusters || data.clusters_formed || 0, 1200);
+            animateValue(document.getElementById('stat-cnmc'), 0, data.total_materials || data.unique_cnmc_codes || 0, 1200);
+
+            // CPSE Distribution Bars
+            const cpseMap = data.cpse_breakdown || data.materials_by_cpse;
+            const cpseBars = document.getElementById('cpse-bars');
+            if (cpseBars && cpseMap) {
+                cpseBars.innerHTML = '';
+                const maxVal = Math.max(...Object.values(cpseMap));
+                Object.entries(cpseMap).sort((a,b)=>b[1]-a[1]).forEach(([cpse, count]) => {
+                    const pct = Math.max(14, (count / maxVal) * 100);
+                    const color = CPSE_COLORS[cpse] || '#6b7280';
+                    cpseBars.innerHTML += `
+                        <div class="flex items-center text-sm">
+                            <div class="w-24 font-medium text-gray-300 truncate">${cpse}</div>
+                            <div class="flex-grow ml-2 flex items-center">
+                                <div class="h-6 rounded-r-md transition-all duration-1000 ease-out flex items-center px-2 text-xs font-bold text-white shadow-sm" style="width: 0%; background-color: ${color}" data-width="${pct}%">
+                                    ${count.toLocaleString()}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                setTimeout(() => {
+                    cpseBars.querySelectorAll('[data-width]').forEach(el => {
+                        el.style.width = el.getAttribute('data-width');
+                    });
+                }, 100);
+            }
+
+            // Donut Chart
+            const types = data.match_type_breakdown || data.match_type_distribution;
+            if (types) {
+                const total = Object.values(types).reduce((a,b)=>a+b, 0) || 1;
+                const colors = {'IDENTICAL': '#10b981', 'EQUIVALENT': '#3b82f6', 'SIMILAR': '#f59e0b'};
+                let gradient = [];
+                let acc = 0;
+                let legendHtml = '';
+                Object.entries(types).forEach(([t, count]) => {
+                    const pct = (count/total)*100;
+                    const c = colors[t] || '#888';
+                    gradient.push(`${c} ${acc}% ${acc+pct}%`);
+                    acc += pct;
+                    legendHtml += `<div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full" style="background:${c}"></span><span class="text-xs text-gray-300 font-medium">${t} (${count.toLocaleString()})</span></div>`;
+                });
+                const donutEl = document.querySelector('.donut-chart');
+                if (donutEl) donutEl.style.background = `conic-gradient(${gradient.join(', ')})`;
+                const innerEl = document.querySelector('.donut-inner');
+                if (innerEl) innerEl.innerHTML = `<span class="text-base font-bold">${total.toLocaleString()}</span>`;
+                const legendEl = document.getElementById('donut-legend');
+                if (legendEl) legendEl.innerHTML = legendHtml;
+            }
+
+            // Recent Activity
+            const matchData = await fetchAPI('/api/matches?page=1&limit=5');
+            if (matchData && matchData.items && matchData.items.length > 0) {
+                const tbody = document.getElementById('recent-activity-tbody');
+                if (tbody) {
+                    tbody.innerHTML = matchData.items.map(m => {
+                        const matA = m.material_a || {};
+                        const codeA = matA.code || matA.material_code || '-';
+                        const descA = matA.desc || matA.description || '-';
+                        const isId = m.match_type === 'IDENTICAL';
+                        return `
+                        <tr class="hover:bg-white/5 transition border-b border-white/5">
+                            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${isId ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}">${m.match_type}</span></td>
+                            <td class="px-4 py-3 font-mono text-cyan-400 text-xs">${codeA}</td>
+                            <td class="px-4 py-3 text-gray-300 truncate max-w-[240px] text-xs">${descA}</td>
+                            <td class="px-4 py-3 text-right text-cyan-400 font-bold text-xs">${m.score}%</td>
+                        </tr>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        async function loadExplorer() {
+            const tbody = document.getElementById('explorer-tbody');
+            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center"><div class="skeleton h-8 w-full rounded mb-2"></div><div class="skeleton h-8 w-full rounded"></div></td></tr>';
+            
+            const q = document.getElementById('explorer-search').value;
+            const cpse = document.getElementById('explorer-cpse').value;
+            
+            let url = `/api/materials?page=1&limit=25`;
+            if (q) url += `&search=${encodeURIComponent(q)}`;
+            if (cpse && cpse !== 'All') url += `&cpse=${encodeURIComponent(cpse)}`;
+
+            const data = await fetchAPI(url);
+            if (!data || !data.items || data.items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No materials found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.items.map(item => {
+                const cCode = item.code || item.material_code || '-';
+                const cDesc = item.desc || item.material_description || '-';
+                const cCat = item.category || (item.attributes && item.attributes.material_type ? item.attributes.material_type.toUpperCase() : 'MISC');
+                const cMatches = item.match_count !== undefined ? item.match_count : (item.matches || 0);
+                return `
+                <tr class="hover:bg-white/5 transition border-b border-white/5 last:border-0">
+                    <td class="px-6 py-3.5">${getCpseBadge(item.cpse)}</td>
+                    <td class="px-6 py-3.5 font-mono text-xs text-cyan-400 font-semibold">${cCode}</td>
+                    <td class="px-6 py-3.5 text-white font-medium text-xs max-w-md truncate" title="${cDesc}">${cDesc}</td>
+                    <td class="px-6 py-3.5"><span class="px-2 py-0.5 rounded text-[11px] bg-white/5 border border-white/10 text-gray-300">${cCat}</span></td>
+                    <td class="px-6 py-3.5 text-center">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${cMatches > 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-gray-800 text-gray-500'}">
+                            ${cMatches} matches
+                        </span>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        async function loadDuplicates(type) {
+            const container = document.getElementById('duplicates-container');
+            container.innerHTML = '<div class="skeleton h-32 w-full rounded-xl mb-4"></div><div class="skeleton h-32 w-full rounded-xl"></div>';
+            
+            let url = `/api/matches?page=1&limit=25`;
+            if (type && type !== 'ALL') url += `&type=${encodeURIComponent(type)}`;
+
+            const data = await fetchAPI(url);
+            if (!data || !data.items || data.items.length === 0) {
+                container.innerHTML = '<div class="text-center py-12 text-gray-500 bg-white/5 rounded-xl border border-white/5">No duplicate records found for this filter.</div>';
+                return;
+            }
+
+            container.innerHTML = data.items.map(match => {
+                const borderColors = {
+                    'IDENTICAL': 'border-green-500/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]',
+                    'EQUIVALENT': 'border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]',
+                    'SIMILAR': 'border-yellow-500/50 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
+                };
+                const textColors = {
+                    'IDENTICAL': 'text-green-400', 'EQUIVALENT': 'text-blue-400', 'SIMILAR': 'text-yellow-400'
+                };
+                
+                const bClass = borderColors[match.match_type] || 'border-white/10';
+                const tClass = textColors[match.match_type] || 'text-gray-400';
+                const rawScore = match.score !== undefined ? match.score : 0;
+                const score = rawScore > 1 ? Math.round(rawScore) : Math.round(rawScore * 100);
+                const matA = match.material_a || {};
+                const matB = match.material_b || {};
+                const codeA = matA.code || matA.material_code || '-';
+                const descA = matA.desc || matA.description || '-';
+                const codeB = matB.code || matB.material_code || '-';
+                const descB = matB.desc || matB.description || '-';
+                
+                return `
+                <div class="glass-panel rounded-xl p-5 border ${bClass} transition-all hover:scale-[1.005]">
+                    <div class="flex flex-col md:flex-row items-center gap-6">
+                        <!-- Left -->
+                        <div class="flex-1 w-full bg-black/40 p-4 rounded-lg border border-white/5">
+                            <div class="flex justify-between items-start mb-2">
+                                ${getCpseBadge(matA.cpse)}
+                                <span class="font-mono text-xs text-cyan-400 font-semibold">${codeA}</span>
+                            </div>
+                            <p class="text-xs font-medium text-white line-clamp-2">${descA}</p>
+                        </div>
+                        
+                        <!-- Center Score -->
+                        <div class="flex flex-col items-center justify-center px-4 min-w-[120px]">
+                            <div class="relative w-14 h-14 flex items-center justify-center rounded-full border-2 border-gray-800 mb-1.5 bg-black/40">
+                                <span class="text-base font-bold ${tClass}">${score}%</span>
+                            </div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider ${tClass} bg-white/5 px-2 py-0.5 rounded border border-current opacity-90">${match.match_type}</span>
+                            <span class="text-[9px] text-gray-500 mt-1 max-w-[140px] text-center truncate">${match.explanation || ''}</span>
+                        </div>
+
+                        <!-- Right -->
+                        <div class="flex-1 w-full bg-black/40 p-4 rounded-lg border border-white/5">
+                            <div class="flex justify-between items-start mb-2">
+                                ${getCpseBadge(matB.cpse)}
+                                <span class="font-mono text-xs text-cyan-400 font-semibold">${codeB}</span>
+                            </div>
+                            <p class="text-xs font-medium text-white line-clamp-2">${descB}</p>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        async function loadClusters() {
+            const container = document.getElementById('clusters-container');
+            container.innerHTML = '<div class="skeleton h-32 w-full rounded-xl mb-4"></div><div class="skeleton h-32 w-full rounded-xl"></div>';
+            
+            const data = await fetchAPI('/api/clusters');
+            const clusters = (data && data.clusters) ? data.clusters : [];
+            if (clusters.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500">No clusters formed yet.</div>';
+                return;
+            }
+
+            container.innerHTML = clusters.slice(0, 30).map((c, idx) => {
+                const cpses = c.cpses || [...new Set((c.members || []).map(m => m.cpse))];
+                const cpseBadges = cpses.map(cp => getCpseBadge(cp)).join(' ');
+                const membersPreview = (c.members || []).slice(0, 4).map(m => `
+                    <div class="flex items-center justify-between text-xs py-1.5 border-b border-white/5 last:border-0">
+                        <div class="flex items-center gap-2">
+                            ${getCpseBadge(m.cpse)}
+                            <span class="font-mono text-cyan-400 text-xs">${m.code}</span>
+                        </div>
+                        <span class="text-gray-300 truncate max-w-[280px] text-xs">${m.desc}</span>
+                    </div>
+                `).join('');
+
+                return `
+                <div class="glass-panel rounded-xl p-5 border border-white/10 hover:border-cyan-500/30 transition">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                                ${c.cnmc_code || `CLS-${idx+1}`}
+                            </span>
+                            <span class="ml-2 px-2 py-0.5 rounded text-[10px] bg-white/5 border border-white/10 text-gray-400">
+                                ${c.category || 'GENERAL'}
+                            </span>
+                        </div>
+                        <span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                            ${c.member_count || (c.members ? c.members.length : 0)} items
+                        </span>
+                    </div>
+                    
+                    <div class="mb-3 flex items-center gap-1.5 flex-wrap">
+                        <span class="text-xs text-gray-500 mr-1">Enterprises:</span>
+                        ${cpseBadges}
+                    </div>
+
+                    <div class="bg-black/30 rounded-lg p-3 border border-white/5 space-y-1">
+                        ${membersPreview}
+                        ${(c.members && c.members.length > 4) ? `<div class="text-[10px] text-gray-500 text-center pt-1">+ ${c.members.length - 4} more materials</div>` : ''}
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        async function loadCNMC() {
+            const tbody = document.getElementById('cnmc-tbody');
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center"><div class="skeleton h-8 w-full rounded mb-2"></div><div class="skeleton h-8 w-full rounded"></div></td></tr>';
+            
+            const data = await fetchAPI('/api/cnmc/master?limit=50&offset=0');
+            const items = (data && data.records) ? data.records : ((data && data.data) ? data.data : []);
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No CNMC master records found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(r => `
+                <tr class="hover:bg-white/5 transition border-b border-white/5 text-xs">
+                    <td class="px-4 py-3 font-mono font-bold text-cyan-400">${r.CNMC || '-'}</td>
+                    <td class="px-4 py-3">${getCpseBadge(r.CPSE)}</td>
+                    <td class="px-4 py-3 font-mono text-gray-300">${r.Legacy_Material_Code || '-'}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-gray-300 text-[10px]">${r.Category || '-'}</span></td>
+                    <td class="px-4 py-3 text-white max-w-sm truncate" title="${r.Standardized_National_Description}">${r.Standardized_National_Description || '-'}</td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.Mapping_Status === 'AUTO_MAPPED_TO_EXISTING_CNMC' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'}">
+                            ${r.Mapping_Status === 'AUTO_MAPPED_TO_EXISTING_CNMC' ? 'MAPPED' : 'NEW CNMC'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadSemanticMap() {
+            const plotDiv = document.getElementById('tsne-plot');
+            plotDiv.innerHTML = '<div class="w-full h-full flex items-center justify-center text-cyan-400 animate-pulse font-mono text-sm">Rendering 1,332 multi-enterprise materials on 2D semantic embedding map...</div>';
+
+            const data = await fetchAPI('/api/tsne');
+            const points = (data && data.points) ? data.points : [];
+            if (points.length === 0) {
+                plotDiv.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500">Semantic t-SNE data not available</div>';
+                return;
+            }
+
+            // Group points by CPSE
+            const cpseGroups = {};
+            points.forEach(p => {
+                const cp = p.cpse || 'OTHER';
+                if (!cpseGroups[cp]) cpseGroups[cp] = { x: [], y: [], text: [], name: cp };
+                cpseGroups[cp].x.push(p.x);
+                cpseGroups[cp].y.push(p.y);
+                const descSnippet = (p.desc || '').substring(0, 70);
+                cpseGroups[cp].text.push(`<b>${cp} | ${p.code}</b><br>${descSnippet}<br><i>Category: ${p.category}</i>`);
+            });
+
+            const traces = Object.entries(cpseGroups).map(([cp, grp]) => ({
+                x: grp.x,
+                y: grp.y,
+                text: grp.text,
+                hoverinfo: 'text',
+                mode: 'markers',
+                type: 'scattergl',
+                name: cp,
+                marker: {
+                    size: 7,
+                    color: CPSE_COLORS[cp] || '#94a3b8',
+                    opacity: 0.85,
+                    line: { width: 0.5, color: '#ffffff' }
+                }
+            }));
+
+            const layout = {
+                title: {
+                    text: 'Semantic Material Space (t-SNE 2D Projection — 1,332 Materials from 9 CPSEs)',
+                    font: { color: '#f1f5f9', size: 14, family: 'Space Grotesk, sans-serif' }
+                },
+                plot_bgcolor: 'rgba(10, 14, 26, 0.8)',
+                paper_bgcolor: 'rgba(10, 14, 26, 0.0)',
+                margin: { t: 40, l: 30, r: 30, b: 30 },
+                xaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.05)', zeroline: false, showticklabels: false },
+                yaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.05)', zeroline: false, showticklabels: false },
+                hovermode: 'closest',
+                legend: {
+                    font: { color: '#e2e8f0', size: 11 },
+                    bgcolor: 'rgba(15, 23, 42, 0.7)',
+                    bordercolor: 'rgba(255,255,255,0.1)',
+                    borderwidth: 1
+                }
+            };
+
+            Plotly.newPlot('tsne-plot', traces, layout, { responsive: true, displayModeBar: false });
+        }
+
+        // --- Code Generator Logic ---
+        function setupCodeGenerator() {
+            const btnGenerate = document.getElementById('btn-generate');
+            const idlePanel = document.getElementById('gen-idle');
+            const loadingPanel = document.getElementById('gen-loading');
+            const resultsPanel = document.getElementById('gen-results');
+
+            // Presets
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const target = e.currentTarget || e.target;
+                    const desc = target.getAttribute('data-desc');
+                    const cpse = target.getAttribute('data-cpse');
+                    if (desc) document.getElementById('gen-desc').value = desc;
+                    if (cpse) document.getElementById('gen-cpse').value = cpse;
+                    document.getElementById('gen-legacy').value = (cpse || 'CPSE') + '-' + Math.floor(100000 + Math.random()*900000);
+                    
+                    document.querySelectorAll('.preset-btn').forEach(b => {
+                        b.classList.remove('bg-cyan-500/20', 'border-cyan-500/50', 'text-cyan-300');
+                        b.classList.add('bg-white/5', 'text-gray-200');
+                    });
+                    target.classList.remove('bg-white/5', 'text-gray-200');
+                    target.classList.add('bg-cyan-500/20', 'border-cyan-500/50', 'text-cyan-300');
+                });
+            });
+
+            btnGenerate.addEventListener('click', async () => {
+                const descInput = document.getElementById('gen-desc');
+                const desc = (descInput.value || '').trim();
+                const legacy = (document.getElementById('gen-legacy').value || '').trim() || 'NEW_ITEM';
+                const cpse = document.getElementById('gen-cpse').value || 'BHEL';
+
+                if (!desc) {
+                    descInput.classList.add('border-red-500', 'ring-2', 'ring-red-500/30');
+                    descInput.focus();
+                    setTimeout(() => descInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500/30'), 2500);
+                    return;
+                }
+
+                // Show loading state immediately
+                idlePanel.classList.add('hidden');
+                resultsPanel.classList.add('hidden');
+                loadingPanel.classList.remove('hidden');
+                btnGenerate.disabled = true;
+                btnGenerate.classList.add('opacity-75', 'cursor-not-allowed');
+
+                try {
+                    const data = await fetchAPI('/api/generate-cnmc', 'POST', {
+                        description: desc,
+                        legacy_code: legacy,
+                        cpse: cpse
+                    });
+
+                    if (data) {
+                        const codeVal = data.cnmc || data.cnmc_code || "CNMC-UNASSIGNED";
+                        document.getElementById('res-cnmc').textContent = codeVal;
+                        
+                        const statusBadge = document.getElementById('res-status');
+                        statusBadge.textContent = data.status || "MAPPED";
+                        if(data.status === 'NEW_CNMC_GENERATED') {
+                            statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold border border-cyan-500/50 bg-cyan-500/10 text-cyan-400';
+                        } else {
+                            statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold border border-emerald-500/50 bg-emerald-500/10 text-emerald-400';
+                        }
+
+                        document.getElementById('res-std-desc').textContent = data.standardized_description || data.standardized_national_description || "-";
+                        document.getElementById('res-tech-key').textContent = data.canonical_key || data.canonical_technical_key || "-";
+
+                        const attrContainer = document.getElementById('res-attributes');
+                        attrContainer.innerHTML = '';
+                        if (data.extracted_attributes) {
+                            Object.entries(data.extracted_attributes).forEach(([k, v]) => {
+                                if (v && v !== 'UNSPECIFIED') {
+                                    attrContainer.innerHTML += `<span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-xs text-gray-300"><strong class="text-cyan-400 font-mono">${k}:</strong> ${v}</span>`;
+                                }
+                            });
+                        }
+
+                        const mappedContainer = document.getElementById('res-mapped-items');
+                        mappedContainer.innerHTML = '';
+                        const matches = data.matched_existing_materials || data.cross_enterprise_mapped_items || [];
+                        if (matches.length > 0) {
+                            matches.forEach(item => {
+                                const cpseName = item.cpse || item.CPSE || 'CPSE';
+                                const itemCode = item.code || item.Legacy_Material_Code || '-';
+                                const itemDesc = item.desc || item.Original_Description || item.Standardized_National_Description || '';
+                                mappedContainer.innerHTML += `
+                                    <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded transition text-xs">
+                                        ${getCpseBadge(cpseName)}
+                                        <span class="font-mono text-cyan-400 w-28 truncate font-semibold">${itemCode}</span>
+                                        <span class="text-gray-300 truncate flex-grow">${itemDesc}</span>
+                                    </div>
+                                `;
+                            });
+                        } else {
+                            mappedContainer.innerHTML = '<div class="p-3 text-xs text-gray-500 text-center">New canonical technical identity registered in National SSOT registry.</div>';
+                        }
+                    }
+
+                    // Reveal results immediately and guarantee full opacity
+                    loadingPanel.classList.add('hidden');
+                    resultsPanel.classList.remove('hidden', 'opacity-0', 'translate-x-8');
+                    resultsPanel.classList.add('opacity-100', 'translate-x-0');
+                    resultsPanel.style.opacity = '1';
+                } catch(err) {
+                    console.error('Error generating CNMC:', err);
+                    loadingPanel.classList.add('hidden');
+                    resultsPanel.classList.remove('hidden');
+                    resultsPanel.style.opacity = '1';
+                } finally {
+                    btnGenerate.disabled = false;
+                    btnGenerate.classList.remove('opacity-75', 'cursor-not-allowed');
+                }
+            });
+        }
+
+        async function loadMatcher(query) {
+            const resContainer = document.getElementById('matcher-results');
+            resContainer.innerHTML = '<div class="col-span-full text-center py-8 text-cyan-400 font-mono text-sm animate-pulse">Running live semantic vector similarity search...</div>';
+            
+            const data = await fetchAPI('/api/match', 'POST', { query });
+            const results = (data && data.results) ? data.results : [];
+            if (results.length > 0) {
+                resContainer.innerHTML = results.map(r => `
+                    <div class="glass-panel rounded-xl p-5 border border-white/10 hover:border-cyan-500/40 transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                ${getCpseBadge(r.cpse)}
+                                <span class="font-mono text-xs text-cyan-400 font-bold">${r.code}</span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-xs font-bold ${r.score >= 70 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/30'}">
+                                ${r.score}% Match (${r.match_type})
+                            </span>
+                        </div>
+                        <p class="text-xs text-white font-medium mb-1">${r.desc}</p>
+                    </div>
+                `).join('');
+            } else {
+                resContainer.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500 bg-white/5 rounded-xl border border-white/5">No matches found for query.</div>';
+            }
+        }
+    </script>
+</body>
+</html>
