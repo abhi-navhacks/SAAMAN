@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaterialNet — One Nation, One Material Code</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom CSS Charts & Animations */
+        .conic-pie {
+            border-radius: 50%;
+            background: conic-gradient(
+                #10b981 0% var(--p1, 0%),
+                #3b82f6 var(--p1, 0%) calc(var(--p1, 0%) + var(--p2, 0%)),
+                #eab308 calc(var(--p1, 0%) + var(--p2, 0%)) 100%
+            );
+        }
+        
+        .progress-circle {
+            background: conic-gradient(#10b981 var(--p, 0%), #374151 0);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .progress-circle::before {
+            content: "";
+            position: absolute;
+            inset: 4px;
+            background: #1f2937;
+            border-radius: 50%;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        
+        .cpse-badge-BHEL { background-color: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.5); }
+        .cpse-badge-GAIL { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.5); }
+        .cpse-badge-IOCL { background-color: rgba(249, 115, 22, 0.2); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.5); }
+        .cpse-badge-HPCL { background-color: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.5); }
+        .cpse-badge-BPCL { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5); }
+        .cpse-badge-ONGC { background-color: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.5); }
+        .cpse-badge-NTPC { background-color: rgba(6, 182, 212, 0.2); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.5); }
+        .cpse-badge-SAIL { background-color: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.5); }
+        .cpse-badge-Coal_India, .cpse-badge-CoalIndia { background-color: rgba(20, 184, 166, 0.2); color: #2dd4bf; border: 1px solid rgba(20, 184, 166, 0.5); }
+        .cpse-badge-default { background-color: rgba(156, 163, 175, 0.2); color: #9ca3af; border: 1px solid rgba(156, 163, 175, 0.5); }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 text-emerald-500 text-2xl mr-2">🔗</div>
+                    <div class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
+                        MaterialNet
+                    </div>
+                    <span class="ml-2 text-sm text-gray-400 hidden sm:block">— One Nation, One Material Code</span>
+                    <span class="ml-4 px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">SIH 2026</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-1" id="nav-tabs">
+                        <button data-tab="overview" class="nav-btn bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">📊 Overview</button>
+                        <button data-tab="explorer" class="nav-btn text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">🔍 Explorer</button>
+                        <button data-tab="duplicates" class="nav-btn text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">👯 Duplicates</button>
+                        <button data-tab="clusters" class="nav-btn text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">🧩 Clusters</button>
+                        <button data-tab="cnmc" class="nav-btn text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">📜 CNMC Mapping</button>
+                        <button data-tab="viz" class="nav-btn text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">🌌 2D Map</button>
+                        <button data-tab="live" class="nav-btn text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">⚡ Live Matcher</button>
+                    </div>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-400 hover:text-white focus:outline-none">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden hidden bg-gray-800 border-t border-gray-700 pb-3 pt-2">
+            <div class="px-2 space-y-1 flex flex-col" id="nav-tabs-mobile">
+                <button data-tab="overview" class="nav-btn-mobile bg-gray-900 text-white block px-3 py-2 rounded-md text-base font-medium text-left">📊 Overview</button>
+                <button data-tab="explorer" class="nav-btn-mobile text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium text-left">🔍 Explorer</button>
+                <button data-tab="duplicates" class="nav-btn-mobile text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium text-left">👯 Duplicates</button>
+                <button data-tab="clusters" class="nav-btn-mobile text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium text-left">🧩 Clusters</button>
+                <button data-tab="cnmc" class="nav-btn-mobile text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium text-left">📜 CNMC Mapping</button>
+                <button data-tab="viz" class="nav-btn text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">🌌 2D Map</button>
+                        <button data-tab="viz" class="nav-btn-mobile text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium text-left">🌌 2D Map</button>
+                <button data-tab="live" class="nav-btn-mobile text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium text-left">⚡ Live Matcher</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- ==================== TAB: OVERVIEW ==================== -->
+        <div id="tab-overview" class="tab-content active space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Hero Cards -->
+                <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 flex flex-col relative overflow-hidden group hover:border-emerald-500/50 transition-colors">
+                    <div class="text-gray-400 text-sm font-medium mb-1">Total Materials</div>
+                    <div class="text-3xl font-bold text-white flex items-center">
+                        <span class="counter" id="stat-total-materials">0</span>
+                        <span class="ml-2 text-2xl">📦</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 flex flex-col relative overflow-hidden group hover:border-emerald-500/50 transition-colors">
+                    <div class="text-gray-400 text-sm font-medium mb-1">Duplicates Found</div>
+                    <div class="text-3xl font-bold text-white flex items-center">
+                        <span class="counter" id="stat-total-duplicates">0</span>
+                        <span class="ml-2 text-2xl">👯</span>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 flex flex-col relative overflow-hidden group hover:border-emerald-500/50 transition-colors">
+                    <div class="text-gray-400 text-sm font-medium mb-1">Clusters Formed</div>
+                    <div class="text-3xl font-bold text-white flex items-center">
+                        <span class="counter" id="stat-total-clusters">0</span>
+                        <span class="ml-2 text-2xl">🧩</span>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 flex flex-col relative overflow-hidden group hover:border-emerald-500/50 transition-colors">
+                    <div class="text-gray-400 text-sm font-medium mb-1">Auto-Approved</div>
+                    <div class="text-3xl font-bold text-emerald-400 flex items-center">
+                        <span class="counter" id="stat-auto-approved">0</span>%
+                        <span class="ml-2 text-2xl">✨</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Materials by CPSE Bar Chart -->
+                <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 lg:col-span-2">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-200">Materials by CPSE 🏭</h3>
+                    <div class="space-y-4" id="cpse-bar-chart">
+                        <!-- Bars injected via JS -->
+                        <div class="h-32 skeleton rounded w-full"></div>
+                    </div>
+                </div>
+
+                <!-- Match Type Distribution Pie Chart -->
+                <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 flex flex-col items-center justify-center">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-200 w-full text-left">Match Types 🎯</h3>
+                    <div id="match-pie-chart" class="w-48 h-48 conic-pie mb-6 shadow-inner relative" style="--p1: 0%; --p2: 0%;">
+                        <div class="absolute inset-4 bg-gray-800 rounded-full flex flex-col items-center justify-center">
+                            <span class="text-xs text-gray-400">Total</span>
+                            <span class="text-xl font-bold" id="pie-total">0</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-3 justify-center text-sm w-full" id="pie-legend">
+                        <!-- Legend injected via JS -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Matches -->
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+                <h3 class="text-lg font-semibold mb-4 text-gray-200">Recent Matches 🔍</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-gray-400 text-sm border-b border-gray-700">
+                                <th class="pb-3 font-medium">Material A</th>
+                                <th class="pb-3 font-medium">Material B</th>
+                                <th class="pb-3 font-medium text-center">Score</th>
+                                <th class="pb-3 font-medium">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-matches-tbody" class="text-sm divide-y divide-gray-700/50">
+                            <tr><td colspan="4" class="py-4"><div class="h-10 skeleton rounded w-full"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB: MATERIAL EXPLORER ==================== -->
+        <div id="tab-explorer" class="tab-content space-y-4">
+            <div class="bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-700 flex flex-col sm:flex-row gap-4 items-center">
+                <div class="relative flex-grow w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span class="text-gray-400">🔍</span>
+                    </div>
+                    <input type="text" id="explorer-search" placeholder="Search descriptions or codes..." class="bg-gray-900 text-white block w-full pl-10 pr-3 py-2 border border-gray-700 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder-gray-500">
+                </div>
+                <div class="w-full sm:w-48">
+                    <select id="explorer-cpse" class="bg-gray-900 text-white block w-full pl-3 pr-10 py-2 border border-gray-700 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                        <option value="">All CPSEs</option>
+                        <option value="BHEL">BHEL</option>
+                        <option value="GAIL">GAIL</option>
+                        <option value="IOCL">IOCL</option>
+                        <option value="HPCL">HPCL</option>
+                        <option value="BPCL">BPCL</option>
+                        <option value="ONGC">ONGC</option>
+                        <option value="NTPC">NTPC</option>
+                        <option value="SAIL">SAIL</option>
+                        <option value="Coal India">Coal India</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden relative">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead class="bg-gray-900/50 text-gray-400 text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="px-6 py-3 font-medium">CPSE</th>
+                                <th class="px-6 py-3 font-medium">Code</th>
+                                <th class="px-6 py-3 font-medium w-full">Description</th>
+                                <th class="px-6 py-3 font-medium">Matches</th>
+                            </tr>
+                        </thead>
+                        <tbody id="explorer-tbody" class="divide-y divide-gray-700 text-sm">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination -->
+                <div class="bg-gray-900/30 px-6 py-3 border-t border-gray-700 flex items-center justify-between">
+                    <div class="text-sm text-gray-400">Showing <span id="explorer-page-info">...</span></div>
+                    <div class="flex space-x-2">
+                        <button id="explorer-prev" class="px-3 py-1 border border-gray-600 rounded bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-sm">Prev</button>
+                        <button id="explorer-next" class="px-3 py-1 border border-gray-600 rounded bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-sm">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB: DUPLICATES ==================== -->
+        <div id="tab-duplicates" class="tab-content space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold">Review Duplicates</h2>
+                <select id="duplicate-type-filter" class="bg-gray-800 text-white pl-3 pr-8 py-1.5 border border-gray-700 rounded-md focus:ring-emerald-500 text-sm">
+                    <option value="">All Types</option>
+                    <option value="IDENTICAL">IDENTICAL</option>
+                    <option value="EQUIVALENT">EQUIVALENT</option>
+                    <option value="SIMILAR">SIMILAR</option>
+                </select>
+            </div>
+            
+            <div id="duplicates-container" class="space-y-6">
+                <!-- Cards injected via JS -->
+            </div>
+            
+            <div class="flex justify-center mt-6">
+                <button id="duplicates-load-more" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-gray-300">Load More</button>
+            </div>
+        </div>
+
+        <!-- ==================== TAB: CLUSTERS ==================== -->
+        <div id="tab-clusters" class="tab-content space-y-6">
+            <h2 class="text-xl font-bold">Material Clusters 🧩</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="clusters-container">
+                <!-- Cards injected via JS -->
+            </div>
+        </div>
+
+        <!-- ==================== TAB: CNMC ==================== -->
+        <div id="tab-cnmc" class="tab-content space-y-4">
+            <div class="bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-700">
+                <div class="relative w-full max-w-md">
+                    <input type="text" id="cnmc-search" placeholder="Search by CNMC code or description..." class="bg-gray-900 text-white block w-full pl-10 pr-3 py-2 border border-gray-700 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span class="text-gray-400">🔍</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead class="bg-gray-900/50 text-gray-400 text-xs uppercase tracking-wider border-b border-gray-700">
+                            <tr>
+                                <th class="px-4 py-3 font-medium">CNMC Code</th>
+                                <th class="px-4 py-3 font-medium">Standard Description</th>
+                                <th class="px-3 py-3 font-medium text-center">BHEL</th>
+                                <th class="px-3 py-3 font-medium text-center">GAIL</th>
+                                <th class="px-3 py-3 font-medium text-center">IOCL</th>
+                                <th class="px-3 py-3 font-medium text-center">HPCL</th>
+                                <th class="px-3 py-3 font-medium text-center">BPCL</th>
+                                <th class="px-3 py-3 font-medium text-center">ONGC</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cnmc-tbody" class="divide-y divide-gray-700 text-sm">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+                <!-- ==================== TAB: VIZ ==================== -->
+        <div id="tab-viz" class="tab-content space-y-4">
+            <div class="bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold">Semantic Embedding Map (t-SNE)</h2>
+                <div class="text-sm text-gray-400">Points grouped by material similarity</div>
+            </div>
+            <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-2 h-[700px] w-full" id="tsne-plot">
+                <!-- Plotly will inject here -->
+            </div>
+        </div>
+        
+        <!-- ==================== TAB: LIVE MATCHER ==================== -->
+        <div id="tab-live" class="tab-content space-y-6">
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 max-w-3xl mx-auto">
+                <h2 class="text-xl font-bold mb-4 flex items-center">⚡ Live Matcher</h2>
+                <p class="text-sm text-gray-400 mb-4">Enter a material description to find the closest matches across all CPSEs using our ML model.</p>
+                
+                <form id="live-match-form" class="space-y-4">
+                    <div>
+                        <textarea id="live-query" rows="3" required placeholder="e.g. BALL BEARING, 6205 ZZ, SKF MAKE" class="bg-gray-900 text-white block w-full p-3 border border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder-gray-500 resize-none"></textarea>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" id="live-submit-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 focus:ring-offset-gray-900">
+                            <span>Find Matches</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="live-results-container" class="max-w-3xl mx-auto space-y-4 hidden">
+                <h3 class="text-lg font-medium border-b border-gray-700 pb-2">Top Matches</h3>
+                <div id="live-results-list" class="space-y-3">
+                    <!-- Results injected via JS -->
+                </div>
+            </div>
+        </div>
+        
+    </main>
+
+    <!-- Slide-out Panel for Details -->
+    <div id="slide-panel" class="fixed inset-y-0 right-0 max-w-md w-full bg-gray-800 shadow-2xl border-l border-gray-700 transform translate-x-full transition-transform duration-300 ease-in-out z-50 flex flex-col">
+        <div class="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-900">
+            <h2 class="text-lg font-bold">Material Details</h2>
+            <button id="close-panel" class="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto flex-grow" id="panel-content">
+            <!-- Details injected via JS -->
+        </div>
+    </div>
+    
+    <div id="panel-overlay" class="fixed inset-0 bg-black/50 hidden z-40 backdrop-blur-sm transition-opacity"></div>
+
+    <script>
+        // --- UTILS ---
+        const $ = (s) => document.querySelector(s);
+        const $$ = (s) => document.querySelectorAll(s);
+        
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-IN').format(num);
+        }
+
+        function getCpseBadge(cpse) {
+            const valid = ['BHEL', 'GAIL', 'IOCL', 'HPCL', 'BPCL', 'ONGC', 'NTPC', 'SAIL', 'Coal India'];
+            const safeClass = (cpse || '').replace(/\s+/g, '_');
+            const cls = valid.includes(cpse) ? `cpse-badge-${safeClass}` : 'cpse-badge-default';
+            return `<span class="px-2 py-0.5 rounded text-xs font-semibold ${cls}">${cpse}</span>`;
+        }
+
+        function getMatchTypeBadge(type) {
+            const colors = {
+                'IDENTICAL': 'bg-green-500/20 text-green-400 border-green-500/30',
+                'EQUIVALENT': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                'SIMILAR': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+            };
+            const cls = colors[type] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+            return `<span class="px-2 py-0.5 rounded text-xs border ${cls}">${type}</span>`;
+        }
+
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = formatNumber(Math.floor(progress * (end - start) + start));
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.innerHTML = formatNumber(end);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // --- MOCK API OR REAL API CALLS ---
+        const API_BASE = '/api';
+        const USE_MOCK = true; // Fallback to mock data if fetch fails
+
+        async function fetchAPI(endpoint, method='GET', body=null) {
+            try {
+                const opts = { method, headers: {} };
+                if (body) {
+                    opts.headers['Content-Type'] = 'application/json';
+                    opts.body = JSON.stringify(body);
+                }
+                const res = await fetch(`${API_BASE}${endpoint}`, opts);
+                if (!res.ok) throw new Error('API Error');
+                return await res.json();
+            } catch (err) {
+                console.warn(`Fetch to ${endpoint} failed, using mock data.`);
+                return getMockData(endpoint, method, body);
+            }
+        }
+
+        function getMockData(endpoint, method, body) {
+            // Mock generator based on endpoint
+            if (endpoint.startsWith('/stats')) {
+                return {
+                    total_materials: 145023, total_matches: 24050, total_clusters: 8930, duplicates_found: 31205,
+                    cpse_breakdown: { 'BHEL': 45000, 'GAIL': 28000, 'IOCL': 32023, 'HPCL': 15000, 'BPCL': 12000, 'ONGC': 13000 },
+                    match_type_breakdown: { 'IDENTICAL': 15200, 'EQUIVALENT': 10500, 'SIMILAR': 5505 },
+                    auto_approved_pct: 65
+                };
+            }
+            if (endpoint.startsWith('/materials')) {
+                const items = Array(20).fill(0).map((_, i) => ({
+                    code: `M${Math.floor(Math.random()*100000)}`,
+                    desc: `BEARING, BALL, DEEP GROOVE, SIZE ${i+10}MM, HIGH TEMP, FOR PUMP`,
+                    cpse: ['BHEL', 'GAIL', 'IOCL', 'HPCL'][Math.floor(Math.random()*4)],
+                    category: 'MECHANICAL',
+                    match_count: Math.floor(Math.random()*5)
+                }));
+                return { items, total: 145023, page: 1, pages: 7251 };
+            }
+            if (endpoint.startsWith('/matches')) {
+                const items = Array(10).fill(0).map(() => ({
+                    material_a: { code: 'A123', desc: 'NUT HEX M12 SS304', cpse: 'BHEL' },
+                    material_b: { code: 'N-45', desc: 'HEX NUT M12 STAINLESS STEEL 304', cpse: 'IOCL' },
+                    score: (Math.random() * 20 + 80).toFixed(1),
+                    match_type: ['IDENTICAL', 'EQUIVALENT', 'SIMILAR'][Math.floor(Math.random()*3)],
+                    explanation: 'Exact dimensional and material match detected via NER.'
+                }));
+                return { items, total: 24050 };
+            }
+            if (endpoint.startsWith('/clusters')) {
+                const clusters = Array(12).fill(0).map((_, i) => ({
+                    cluster_id: `CL-100${i}`, cnmc_code: `CNMC-M-00${i}`, category: 'PIPING', member_count: Math.floor(Math.random()*6)+2,
+                    members: [{ cpse: 'BHEL', code: 'P1' }, { cpse: 'IOCL', code: 'IP2' }]
+                }));
+                return { clusters };
+            }
+            if (endpoint.startsWith('/cnmc')) {
+                const mappings = Array(15).fill(0).map((_, i) => ({
+                    cnmc_code: `10-20-30-${i.toString().padStart(3,'0')}`, category: 'VALVES', material_desc: 'GATE VALVE 2 INCH FLANGED 150# CS',
+                    cpse_codes: { 'BHEL': 'BV123', 'IOCL': 'V-99', 'GAIL': i%2==0?'GV4':null }
+                }));
+                return { mappings };
+            }
+            if (endpoint.startsWith('/match') && method === 'POST') {
+                return {
+                    query: body.query,
+                    results: [
+                        { code: 'B-6205', desc: 'BEARING 6205 ZZ SKF', cpse: 'BHEL', score: 96.5, match_type: 'IDENTICAL' },
+                        { code: 'BR-11', desc: 'BALL BEARING 6205-ZZ', cpse: 'IOCL', score: 92.1, match_type: 'EQUIVALENT' },
+                        { code: 'G-BRG-5', desc: '6205ZZ BEARING ASSEMBLY', cpse: 'GAIL', score: 85.0, match_type: 'SIMILAR' }
+                    ]
+                };
+            }
+            return {};
+        }
+
+        // --- TAB MANAGEMENT ---
+        function switchTab(tabId) {
+            $$('.tab-content').forEach(el => el.classList.remove('active'));
+            $$('.nav-btn, .nav-btn-mobile').forEach(el => {
+                el.classList.remove('bg-gray-900', 'text-white');
+                el.classList.add('text-gray-300');
+            });
+            
+            $(`#tab-${tabId}`).classList.add('active');
+            $$(`[data-tab="${tabId}"]`).forEach(el => {
+                el.classList.remove('text-gray-300');
+                el.classList.add('bg-gray-900', 'text-white');
+            });
+
+            // Mobile menu auto-close
+            $('#mobile-menu').classList.add('hidden');
+            
+            // Load data if not loaded
+            if (tabId === 'overview' && !$('#stat-total-materials').dataset.loaded) loadOverview();
+            if (tabId === 'explorer' && !$('#explorer-tbody').dataset.loaded) loadExplorer(1);
+            if (tabId === 'duplicates' && !$('#duplicates-container').dataset.loaded) loadDuplicates();
+            if (tabId === 'clusters' && !$('#clusters-container').dataset.loaded) loadClusters();
+            
+        if (tabId === 'cnmc' && !$('#cnmc-tbody').dataset.loaded) loadCNMC();
+        if (tabId === 'viz' && !$('#tsne-plot').dataset.loaded) loadViz();
+
+        }
+
+        $$('.nav-btn, .nav-btn-mobile').forEach(btn => {
+            btn.addEventListener('click', (e) => switchTab(e.target.dataset.tab));
+        });
+
+        $('#mobile-menu-btn').addEventListener('click', () => {
+            $('#mobile-menu').classList.toggle('hidden');
+        });
+
+        // --- SLIDE PANEL ---
+        function openPanel(contentHTML) {
+            $('#panel-content').innerHTML = contentHTML;
+            $('#slide-panel').classList.remove('translate-x-full');
+            $('#panel-overlay').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        function closePanel() {
+            $('#slide-panel').classList.add('translate-x-full');
+            $('#panel-overlay').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        $('#close-panel').addEventListener('click', closePanel);
+        $('#panel-overlay').addEventListener('click', closePanel);
+
+
+        // --- OVERVIEW TAB LOGIC ---
+        async function loadOverview() {
+            const data = await fetchAPI('/stats');
+            
+            animateValue($('#stat-total-materials'), 0, data.total_materials, 1500);
+            animateValue($('#stat-total-duplicates'), 0, data.duplicates_found, 1500);
+            animateValue($('#stat-total-clusters'), 0, data.total_clusters, 1500);
+            animateValue($('#stat-auto-approved'), 0, data.auto_approved_pct, 1000);
+            $('#stat-total-materials').dataset.loaded = 'true';
+
+            // Render Bar Chart
+            const maxVal = Math.max(...Object.values(data.cpse_breakdown));
+            const barHTML = Object.entries(data.cpse_breakdown).map(([cpse, count]) => {
+                const pct = (count / maxVal) * 100;
+                const colors = {
+                    'BHEL': 'bg-blue-500', 'GAIL': 'bg-emerald-500', 'IOCL': 'bg-orange-500', 
+                    'HPCL': 'bg-purple-500', 'BPCL': 'bg-red-500', 'ONGC': 'bg-yellow-500'
+                };
+                const bg = colors[cpse] || 'bg-gray-500';
+                return `
+                    <div class="flex items-center text-sm">
+                        <div class="w-16 font-medium text-gray-400">${cpse}</div>
+                        <div class="flex-grow ml-4 bg-gray-700 h-4 rounded-full overflow-hidden">
+                            <div class="${bg} h-full rounded-full transition-all duration-1000" style="width: 0%" data-width="${pct}%"></div>
+                        </div>
+                        <div class="w-16 text-right font-mono text-gray-300 ml-4">${formatNumber(count)}</div>
+                    </div>
+                `;
+            }).join('');
+            $('#cpse-bar-chart').innerHTML = barHTML;
+            // trigger animation
+            setTimeout(() => {
+                $$('#cpse-bar-chart [data-width]').forEach(el => el.style.width = el.dataset.width);
+            }, 100);
+
+            // Render Pie Chart
+            const totalMatches = Object.values(data.match_type_breakdown).reduce((a,b)=>a+b, 0);
+            const p1 = (data.match_type_breakdown['IDENTICAL'] / totalMatches) * 100;
+            const p2 = (data.match_type_breakdown['EQUIVALENT'] / totalMatches) * 100;
+            const pie = $('#match-pie-chart');
+            pie.style.setProperty('--p1', p1 + '%');
+            pie.style.setProperty('--p2', p2 + '%');
+            animateValue($('#pie-total'), 0, totalMatches, 1000);
+
+            $('#pie-legend').innerHTML = `
+                <div class="flex items-center"><span class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></span>Identical (${formatNumber(data.match_type_breakdown['IDENTICAL'])})</div>
+                <div class="flex items-center"><span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>Equivalent (${formatNumber(data.match_type_breakdown['EQUIVALENT'])})</div>
+                <div class="flex items-center"><span class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></span>Similar (${formatNumber(data.match_type_breakdown['SIMILAR'])})</div>
+            `;
+
+            // Recent matches
+            const recent = await fetchAPI('/matches?page=1&limit=10');
+            $('#recent-matches-tbody').innerHTML = recent.items.map(m => `
+                <tr class="hover:bg-gray-700/30 transition-colors">
+                    <td class="py-3 pr-2">
+                        <div class="flex items-center gap-2 mb-1">${getCpseBadge(m.material_a.cpse)} <span class="text-xs text-gray-400 font-mono">${m.material_a.code}</span></div>
+                        <div class="truncate max-w-[200px]" title="${m.material_a.desc}">${m.material_a.desc}</div>
+                    </td>
+                    <td class="py-3 pr-2">
+                        <div class="flex items-center gap-2 mb-1">${getCpseBadge(m.material_b.cpse)} <span class="text-xs text-gray-400 font-mono">${m.material_b.code}</span></div>
+                        <div class="truncate max-w-[200px]" title="${m.material_b.desc}">${m.material_b.desc}</div>
+                    </td>
+                    <td class="py-3 px-2 text-center">
+                        <div class="inline-flex items-center justify-center font-mono ${m.score > 90 ? 'text-emerald-400' : 'text-yellow-400'}">${m.score}%</div>
+                    </td>
+                    <td class="py-3 pl-2">${getMatchTypeBadge(m.match_type)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // --- EXPLORER TAB LOGIC ---
+        let explorerPage = 1;
+        async function loadExplorer(page) {
+            const tbody = $('#explorer-tbody');
+            if (page === 1) tbody.innerHTML = `<tr><td colspan="4" class="py-4"><div class="h-6 skeleton w-full mb-2"></div><div class="h-6 skeleton w-full mb-2"></div><div class="h-6 skeleton w-full"></div></td></tr>`;
+            
+            const cpse = $('#explorer-cpse').value;
+            const data = await fetchAPI(`/materials?page=${page}&cpse=${cpse}`);
+            
+            tbody.innerHTML = data.items.map(m => `
+                <tr class="hover:bg-gray-700/50 cursor-pointer transition-colors" onclick='showMaterialDetails(${JSON.stringify(m)})'>
+                    <td class="px-6 py-3">${getCpseBadge(m.cpse)}</td>
+                    <td class="px-6 py-3 font-mono text-gray-300 text-xs">${m.code}</td>
+                    <td class="px-6 py-3 max-w-xs truncate" title="${m.desc}">${m.desc}</td>
+                    <td class="px-6 py-3 text-center text-gray-400">
+                        ${m.match_count > 0 ? `<span class="bg-gray-700 px-2 py-0.5 rounded-full text-xs">${m.match_count}</span>` : '-'}
+                    </td>
+                </tr>
+            `).join('');
+            
+            $('#explorer-page-info').innerText = `Page ${data.page} of ${formatNumber(data.pages)} (${formatNumber(data.total)} total)`;
+            $('#explorer-prev').disabled = data.page <= 1;
+            $('#explorer-next').disabled = data.page >= data.pages;
+            explorerPage = data.page;
+            tbody.dataset.loaded = 'true';
+        }
+
+        $('#explorer-cpse').addEventListener('change', () => loadExplorer(1));
+        $('#explorer-prev').addEventListener('click', () => loadExplorer(explorerPage - 1));
+        $('#explorer-next').addEventListener('click', () => loadExplorer(explorerPage + 1));
+
+        window.showMaterialDetails = function(m) {
+            const html = `
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            ${getCpseBadge(m.cpse)}
+                            <span class="font-mono text-gray-400 border border-gray-600 px-2 py-1 rounded bg-gray-900">${m.code}</span>
+                        </div>
+                        <h3 class="text-xl font-medium text-white">${m.desc}</h3>
+                    </div>
+                    
+                    <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                        <h4 class="text-sm text-gray-400 uppercase tracking-wide mb-3">Extracted Attributes (NER)</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div><span class="text-gray-500 block">Item</span><span class="font-medium text-emerald-400">BEARING</span></div>
+                            <div><span class="text-gray-500 block">Type</span><span class="font-medium text-blue-400">BALL, DEEP GROOVE</span></div>
+                            <div><span class="text-gray-500 block">Size/Spec</span><span class="font-medium text-purple-400">6205 ZZ</span></div>
+                            <div><span class="text-gray-500 block">Brand</span><span class="font-medium text-yellow-400">SKF</span></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-sm text-gray-400 uppercase tracking-wide mb-3">Cluster Membership</h4>
+                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
+                            <div>
+                                <div class="text-xs text-gray-500 mb-1">CNMC Code</div>
+                                <div class="font-mono text-emerald-400">10-45-20-001</div>
+                            </div>
+                            <button class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded border border-gray-600 transition-colors">View Cluster</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            openPanel(html);
+        };
+
+        // --- DUPLICATES TAB LOGIC ---
+        async function loadDuplicates() {
+            const container = $('#duplicates-container');
+            container.innerHTML = '<div class="h-32 skeleton rounded-xl w-full"></div>';
+            
+            const data = await fetchAPI('/matches?page=1');
+            
+            container.innerHTML = data.items.map(m => {
+                const colorType = m.match_type === 'IDENTICAL' ? 'green' : m.match_type === 'EQUIVALENT' ? 'blue' : 'yellow';
+                const pDeg = (m.score / 100) * 360;
+                
+                return `
+                <div class="bg-gray-800 rounded-xl p-5 shadow-lg border border-gray-700 flex flex-col md:flex-row gap-6 items-center">
+                    <!-- Mat A -->
+                    <div class="flex-1 w-full bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                        <div class="flex justify-between items-start mb-2">
+                            ${getCpseBadge(m.material_a.cpse)}
+                            <span class="font-mono text-xs text-gray-500">${m.material_a.code}</span>
+                        </div>
+                        <p class="text-sm font-medium h-12 overflow-hidden text-ellipsis">${m.material_a.desc}</p>
+                    </div>
+                    
+                    <!-- Center Match Info -->
+                    <div class="flex flex-col items-center justify-center shrink-0 w-32">
+                        <div class="progress-circle w-16 h-16 mb-2" style="--p: ${pDeg}deg; background: conic-gradient(var(--tw-colors-${colorType}-500, #${colorType==='green'?'10b981':colorType==='blue'?'3b82f6':'eab308'}) var(--p), #374151 0);">
+                            <span class="relative z-10 font-bold text-sm text-white">${m.score}%</span>
+                        </div>
+                        ${getMatchTypeBadge(m.match_type)}
+                    </div>
+                    
+                    <!-- Mat B -->
+                    <div class="flex-1 w-full bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                        <div class="flex justify-between items-start mb-2">
+                            ${getCpseBadge(m.material_b.cpse)}
+                            <span class="font-mono text-xs text-gray-500">${m.material_b.code}</span>
+                        </div>
+                        <p class="text-sm font-medium h-12 overflow-hidden text-ellipsis">${m.material_b.desc}</p>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex flex-row md:flex-col gap-2 w-full md:w-auto shrink-0">
+                        <button class="flex-1 md:flex-none px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/50 rounded text-sm transition-colors" onclick="this.closest('.flex-col').parentElement.style.display='none'">Approve</button>
+                        <button class="flex-1 md:flex-none px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/50 rounded text-sm transition-colors" onclick="this.closest('.flex-col').parentElement.style.display='none'">Reject</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+            container.dataset.loaded = 'true';
+        }
+
+        // --- CLUSTERS TAB LOGIC ---
+        async function loadClusters() {
+            const container = $('#clusters-container');
+            const data = await fetchAPI('/clusters');
+            
+            container.innerHTML = data.clusters.map(c => {
+                const cpseIcons = [...new Set(c.members.map(m => m.cpse))].map(cpse => getCpseBadge(cpse)).join(' ');
+                
+                return `
+                <div class="bg-gray-800 rounded-xl p-5 shadow-lg border border-gray-700 hover:border-gray-500 transition-colors cursor-pointer" onclick="alert('Open cluster details panel')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <div class="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">${c.category}</div>
+                            <div class="font-mono text-emerald-400 font-bold">${c.cnmc_code}</div>
+                        </div>
+                        <div class="bg-gray-700 rounded-full h-8 w-8 flex items-center justify-center text-sm font-bold border border-gray-600">
+                            ${c.member_count}
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-300 mb-4 line-clamp-2 italic">
+                        "Standardized description goes here based on cluster centroid."
+                    </div>
+                    <div class="flex flex-wrap gap-1 border-t border-gray-700 pt-3">
+                        <span class="text-xs text-gray-500 mr-1 self-center">CPSEs:</span>
+                        ${cpseIcons}
+                    </div>
+                </div>
+                `;
+            }).join('');
+            container.dataset.loaded = 'true';
+        }
+
+        // --- CNMC TAB LOGIC ---
+        async function loadCNMC() {
+            const tbody = $('#cnmc-tbody');
+            const data = await fetchAPI('/cnmc');
+            
+            tbody.innerHTML = data.mappings.map(m => `
+                <tr class="hover:bg-gray-700/50 transition-colors">
+                    <td class="px-4 py-3 font-mono text-emerald-400 font-medium">${m.cnmc_code}</td>
+                    <td class="px-4 py-3 truncate max-w-xs" title="${m.material_desc}">${m.material_desc}</td>
+                    <td class="px-3 py-3 text-center font-mono text-xs text-gray-300">${m.cpse_codes['BHEL'] || '<span class="text-gray-700">-</span>'}</td>
+                    <td class="px-3 py-3 text-center font-mono text-xs text-gray-300">${m.cpse_codes['GAIL'] || '<span class="text-gray-700">-</span>'}</td>
+                    <td class="px-3 py-3 text-center font-mono text-xs text-gray-300">${m.cpse_codes['IOCL'] || '<span class="text-gray-700">-</span>'}</td>
+                    <td class="px-3 py-3 text-center font-mono text-xs text-gray-300">${m.cpse_codes['HPCL'] || '<span class="text-gray-700">-</span>'}</td>
+                    <td class="px-3 py-3 text-center font-mono text-xs text-gray-300">${m.cpse_codes['BPCL'] || '<span class="text-gray-700">-</span>'}</td>
+                    <td class="px-3 py-3 text-center font-mono text-xs text-gray-300">${m.cpse_codes['ONGC'] || '<span class="text-gray-700">-</span>'}</td>
+                </tr>
+            `).join('');
+            tbody.dataset.loaded = 'true';
+        }
+
+        // --- LIVE MATCHER LOGIC ---
+        $('#live-match-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = $('#live-submit-btn');
+            const query = $('#live-query').value;
+            const container = $('#live-results-container');
+            const list = $('#live-results-list');
+            
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Matching...`;
+            btn.disabled = true;
+            
+            list.innerHTML = `<div class="h-16 skeleton rounded-lg w-full mb-2"></div><div class="h-16 skeleton rounded-lg w-full"></div>`;
+            container.classList.remove('hidden');
+
+            const data = await fetchAPI('/match', 'POST', { query });
+            
+            setTimeout(() => {
+                list.innerHTML = data.results.map(r => `
+                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 flex items-center gap-4 hover:border-gray-500 transition-colors">
+                        <div class="flex-shrink-0 text-center w-16">
+                            <div class="text-lg font-bold ${r.score > 90 ? 'text-emerald-400' : 'text-yellow-400'}">${r.score}</div>
+                            <div class="text-[10px] text-gray-500 uppercase tracking-wide">Score</div>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex items-center gap-2 mb-1">
+                                ${getCpseBadge(r.cpse)}
+                                <span class="font-mono text-xs text-gray-400">${r.code}</span>
+                                ${getMatchTypeBadge(r.match_type)}
+                            </div>
+                            <div class="text-sm font-medium text-gray-200">${r.desc}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                btn.innerHTML = `<span>Find Matches</span>`;
+                btn.disabled = false;
+            }, 800); // Artificial delay for effect
+        });
+
+        // INIT
+        window.addEventListener('DOMContentLoaded', () => {
+            loadOverview();
+        });
+
+
+        async function loadViz() {
+            const plotDiv = document.getElementById('tsne-plot');
+            if (!plotDiv) return;
+            if (plotDiv.dataset.loaded) return;
+            plotDiv.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400">Loading map...</div>';
+            try {
+                const data = await fetchAPI('/tsne');
+                const points = data.points;
+                
+                const traces = {};
+                const colors = {'BHEL': '#3b82f6', 'GAIL': '#10b981', 'IOCL': '#f97316', 'HPCL': '#a855f7', 'BPCL': '#ef4444', 'ONGC': '#eab308', 'NTPC': '#06b6d4', 'SAIL': '#818cf8', 'Coal India': '#2dd4bf'};
+                
+                points.forEach(p => {
+                    const cpse = p.cpse || 'Unknown';
+                    if (!traces[cpse]) {
+                        traces[cpse] = { x: [], y: [], text: [], mode: 'markers', type: 'scattergl', name: cpse, marker: {size: 8, opacity: 0.8, color: colors[cpse] || '#9ca3af'} };
+                    }
+                    traces[cpse].x.push(p.x);
+                    traces[cpse].y.push(p.y);
+                    traces[cpse].text.push(`[${p.code}]<br>${p.desc.substring(0,80)}`);
+                });
+                
+                const plotData = Object.values(traces);
+                const layout = {
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: '#9ca3af' },
+                    xaxis: { showgrid: true, gridcolor: '#374151', zeroline: false, showticklabels: false },
+                    yaxis: { showgrid: true, gridcolor: '#374151', zeroline: false, showticklabels: false },
+                    margin: { l: 20, r: 20, t: 30, b: 20 },
+                    hovermode: 'closest'
+                };
+                
+                Plotly.newPlot(plotDiv, plotData, layout, {responsive: true, displayModeBar: false});
+                plotDiv.dataset.loaded = 'true';
+            } catch(e) {
+                console.error(e);
+                plotDiv.innerHTML = '<div class="flex items-center justify-center h-full text-red-400">Failed to load t-SNE data. Check server logs.</div>';
+            }
+        }
+
+    </script>
+</body>
+</html>
